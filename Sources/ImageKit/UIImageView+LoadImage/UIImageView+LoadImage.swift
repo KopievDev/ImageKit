@@ -36,6 +36,10 @@ extension UIImageView: PropertyStoring {
         set { objc_setAssociatedObject(self, &loadingImageAssociationKey, newValue, .OBJC_ASSOCIATION_RETAIN) }
     }
 
+}
+
+public extension UIImageView {
+
     func load(
         urlString: String,
         withStoring: Bool = true,
