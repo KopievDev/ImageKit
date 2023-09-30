@@ -44,19 +44,21 @@ public extension UIImageView {
         urlString: String,
         withStoring: Bool = true,
         placeholder: UIImage? = nil,
-        renderingMode: UIImage.RenderingMode = .alwaysOriginal
+        renderingMode: UIImage.RenderingMode = .alwaysOriginal,
+        completion: ((UIImage?) -> Void)? = nil
     ) {
         if withStoring {
-            loadStoring(urlString: urlString, placeholder: placeholder, renderingMode: renderingMode)
+            loadStoring(urlString: urlString, placeholder: placeholder, renderingMode: renderingMode, completion: completion)
         } else {
-            load(urlString: urlString, placeholder: placeholder, renderingMode: renderingMode)
+            load(urlString: urlString, placeholder: placeholder, renderingMode: renderingMode, completion: completion)
         }
     }
 
     private func load(
         urlString: String,
         placeholder: UIImage? = nil,
-        renderingMode: UIImage.RenderingMode = .alwaysOriginal
+        renderingMode: UIImage.RenderingMode = .alwaysOriginal,
+        completion: ((UIImage?) -> Void)?
     ) {
         guard let urlImage = URL(string: urlString.urlEncoded()) else {
             if let placeholder { image = placeholder }
@@ -68,6 +70,7 @@ public extension UIImageView {
             if let image = try await imageCache.value(for: urlString) {
                 guard loadingImage == urlString else { return }
                 self.image = image.withRenderingMode(renderingMode)
+                completion?(self.image)
                 return
             }
             let data = try await getImage(url: urlImage)
@@ -75,13 +78,15 @@ public extension UIImageView {
             guard loadingImage == urlString else { return }
             imageCache.insert(image, for: urlString)
             self.image = image
+            completion?(self.image)
         }
     }
 
     private func loadStoring(
         urlString: String,
         placeholder: UIImage? = nil,
-        renderingMode: UIImage.RenderingMode = .alwaysOriginal
+        renderingMode: UIImage.RenderingMode = .alwaysOriginal,
+        completion: ((UIImage?) -> Void)?
     ) {
         guard let urlImage = URL(string: urlString) else {
             if let placeholder { image = placeholder }
@@ -93,11 +98,13 @@ public extension UIImageView {
             if let image = try? await imageCache.value(for: urlString) {
                 guard loadingImage == urlString else { return }
                 self.image = image.withRenderingMode(renderingMode)
+                completion?(self.image)
                 return
             }
             if let image = try? await fileCache.value(for: urlString) {
                 guard loadingImage == urlString else { return }
                 self.image = image.withRenderingMode(renderingMode)
+                completion?(self.image)
                 imageCache.insert(image, for: urlString)
                 return
             }
@@ -107,6 +114,7 @@ public extension UIImageView {
             guard loadingImage == urlString else { return }
             imageCache.insert(image, for: urlString)
             self.image = image?.withRenderingMode(renderingMode)
+            completion?(self.image)
             fileCache.insert(image, for: urlString)
         }
     }
